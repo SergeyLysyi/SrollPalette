@@ -1,6 +1,7 @@
 package sergeylysyi.scrollpalette;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.util.AttributeSet;
@@ -10,13 +11,18 @@ import java.util.*;
 
 public class ColorButton extends Button {
     static private final int HSV_ARRAY_SIZE = 3;
+    static private final float HUE_MAX_VALUE = 359.7f;
+    static private final float EPSILON = 0.1f;
     private int coreColor;
-    private List<ColorBoundListener> boundListeners = new LinkedList<>();
+    private List<LinkedList<ColorBoundListener>> boundListeners = new ArrayList<>(HSV_ARRAY_SIZE);
     private float[] fixedHSV = new float[HSV_ARRAY_SIZE];
     private float[] currentHSV = new float[HSV_ARRAY_SIZE];
 
     public ColorButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        for (int i = 0; i < HSV_ARRAY_SIZE; i++) {
+            boundListeners.add(new LinkedList<ColorBoundListener>());
+        }
     }
 
     public int getColor() {
@@ -42,11 +48,23 @@ public class ColorButton extends Button {
 
     public void offsetHSVColor(float[] hsvOffset) {
         //Hue max is 360 instead of 1;
-        currentHSV[0] = Math.min(Math.max(fixedHSV[0] + hsvOffset[0], 0), 359.9999f);
+        boolean[] maxReached = new boolean[HSV_ARRAY_SIZE];
+
+        currentHSV[0] = Math.min(Math.max(fixedHSV[0] + hsvOffset[0], 0), HUE_MAX_VALUE);
+        maxReached[0] = currentHSV[0] > HUE_MAX_VALUE - EPSILON || currentHSV[0] < 0 + EPSILON;
+
         for (int i = 1; i < HSV_ARRAY_SIZE; i++) {
             currentHSV[i] = Math.min(Math.max(fixedHSV[i] + hsvOffset[i], 0), 1);
+            maxReached[i] = currentHSV[i] > 1- EPSILON || currentHSV[i] < 0 + EPSILON;
         }
         applyColor(currentHSV);
+        for (int i = 0; i < maxReached.length; i++) {
+            if (maxReached[i]) {
+                for (ColorBoundListener cbl : boundListeners.get(i)) {
+                    cbl.onColorBoundReached();
+                }
+            }
+        }
     }
 
     public void fixCurrentColor() {
@@ -62,8 +80,8 @@ public class ColorButton extends Button {
         this.invalidate();
     }
 
-    public void addBoundListener(ColorBoundListener listener){
-        boundListeners.add(listener);
+    public void addBoundListener(ColorBoundListener listener, int hsvIndex){
+        boundListeners.get(hsvIndex).add(listener);
     }
 
     interface ColorBoundListener {

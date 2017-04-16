@@ -116,7 +116,6 @@ public class ScrollPalette extends Activity {
                 @Override
                 public boolean onTouch(View v, MotionEvent e) {
                     if (colorEditMode) {
-                        System.out.println(e.getAction());
                         if (e.getAction() == MotionEvent.ACTION_MOVE) {
                             MotionEvent.PointerCoords pointerOffset = new MotionEvent.PointerCoords();
                             e.getPointerCoords(0, pointerOffset);
@@ -137,6 +136,15 @@ public class ScrollPalette extends Activity {
                     return gestureDetector.onTouchEvent(e);
                 }
             });
+
+            ColorButton.ColorBoundListener colorBoundListener = new ColorButton.ColorBoundListener() {
+                @Override
+                public void onColorBoundReached() {
+                    vibrator.vibrate(2);
+                }
+            };
+            b.addBoundListener(colorBoundListener, 0);
+            b.addBoundListener(colorBoundListener, 2);
             buttons.add(b);
         }
     }
