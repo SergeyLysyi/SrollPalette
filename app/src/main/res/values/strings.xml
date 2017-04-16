@@ -2,4 +2,6 @@
     <string name="app_name">ScrollPalette</string>
 
     <string name="action_settings">Settings</string>
+    <string name="button">choose color from palette</string>
+    <string name="confirm_button">confirm</string>
 </resources>

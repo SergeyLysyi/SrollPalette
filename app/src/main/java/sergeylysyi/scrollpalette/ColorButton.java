@@ -49,6 +49,12 @@ public class ColorButton extends Button {
         setHSVColor(hsv);
     }
 
+    public void setColor(int color){
+        float[] hsv = new float[HSV_ARRAY_SIZE];
+        Color.colorToHSV(color, hsv);
+        setHSVColor(hsv);
+    }
+
     public void offsetHSVColor(float[] hsvOffset) {
         //Hue max is 360 instead of 1;
         boolean[] maxReached = new boolean[HSV_ARRAY_SIZE];
