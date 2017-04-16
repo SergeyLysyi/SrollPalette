@@ -18,7 +18,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +33,7 @@ public class ScrollPalette extends Activity {
     private LinearLayout linLay;
     private SwitchingScrollView sv;
     private CurrentColor currentColor = null;
+    private CurrentColor dynamicColor = null;
     private List<ColorButton> buttons = new ArrayList<>();
     private boolean colorEditMode = false;
 
@@ -44,6 +44,7 @@ public class ScrollPalette extends Activity {
         setContentView(R.layout.activity_pallete);
 
         currentColor = new CurrentColor(0);
+        dynamicColor = new CurrentColor(0);
 
         final Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
@@ -61,10 +62,12 @@ public class ScrollPalette extends Activity {
         linLay = (LinearLayout) findViewById(R.id.linearLayout);
 
         ImageView imageOfCurrentColor = (ImageView) findViewById(R.id.currentColor);
+        ImageView imageOfDynamicColor = (ImageView) findViewById(R.id.dynamicColor);
         TextView textRGB = (TextView) findViewById(R.id.textViewRGB);
         TextView textHSV = (TextView) findViewById(R.id.textViewHSV);
 
         currentColor.addViewForBackgroundChange(imageOfCurrentColor);
+        dynamicColor.addViewForBackgroundChange(imageOfDynamicColor);
 
         currentColor.addTextViewForTextChange(
                 textRGB,
@@ -124,9 +127,11 @@ public class ScrollPalette extends Activity {
                             hsvOffset[0] = pointerOffset.x / 2f;
                             hsvOffset[2] = -pointerOffset.y / 500;
                             b.offsetHSVColor(hsvOffset);
+                            dynamicColor.change(b.getDynamicColor());
                             return true;
                         } else if (e.getAction() == MotionEvent.ACTION_UP) {
                             b.fixCurrentColor();
+                            dynamicColor.change(0);
                             colorEditMode = false;
                             sv.scrollAllowed = true;
                             return true;
