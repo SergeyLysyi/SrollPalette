@@ -2,20 +2,23 @@ package sergeylysyi.scrollpalette;
 
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Vibrator;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,9 +32,10 @@ import java.util.Set;
 public class ScrollPalette extends Activity {
 
     private LinearLayout linLay;
-    private HorizontalScrollView sv;
+    private SwitchingScrollView sv;
     private CurrentColor currentColor = null;
-    private List<Button> buttons = new ArrayList<>();
+    private List<ColorButton> buttons = new ArrayList<>();
+    private boolean colorEditMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +45,9 @@ public class ScrollPalette extends Activity {
 
         currentColor = new CurrentColor(0);
 
-        sv = (HorizontalScrollView) findViewById(R.id.horizontalScrollView);
+        final Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
+        sv = (SwitchingScrollView) findViewById(R.id.horizontalScrollView);
         final ViewTreeObserver vto = sv.getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -76,20 +81,60 @@ public class ScrollPalette extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT);
 
         for (int i = 0; i < linLay.getChildCount(); i++) {
-            Button b = (Button) linLay.getChildAt(i);
+            final ColorButton b = (ColorButton) linLay.getChildAt(i);
             b.setLayoutParams(params);
-            b.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Bitmap bm = Bitmap.createBitmap(
-                            v.getWidth(),
-                            v.getHeight(),
-                            Bitmap.Config.ARGB_8888);
-                    Canvas c = new Canvas(bm);
-                    v.draw(c);
 
-                    int color = bm.getPixel(bm.getWidth() / 2, bm.getHeight() / 2);
-                    ScrollPalette.this.currentColor.change(color);
+            final GestureDetector gestureDetector = new GestureDetector(
+                    this,
+                    new GestureDetector.SimpleOnGestureListener() {
+                        @Override
+                        public boolean onDown(MotionEvent e) {
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onSingleTapConfirmed(MotionEvent e) {
+                            currentColor.change(b.getColor());
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onDoubleTap(MotionEvent e) {
+                            b.resetColor();
+                            return true;
+                        }
+
+                        @Override
+                        public void onLongPress(MotionEvent e) {
+                            colorEditMode = true;
+                            sv.scrollAllowed = false;
+                            vibrator.vibrate(50);
+                        }
+                    }
+            );
+            b.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent e) {
+                    if (colorEditMode) {
+                        System.out.println(e.getAction());
+                        if (e.getAction() == MotionEvent.ACTION_MOVE) {
+                            MotionEvent.PointerCoords pointerOffset = new MotionEvent.PointerCoords();
+                            e.getPointerCoords(0, pointerOffset);
+                            float[] hsvOffset = new float[3];
+                            //TODO: dp instead of px
+                            hsvOffset[0] = pointerOffset.x / 2f;
+                            hsvOffset[2] = -pointerOffset.y / 500;
+                            b.offsetHSVColor(hsvOffset);
+                            return true;
+                        } else if (e.getAction() == MotionEvent.ACTION_UP) {
+                            b.fixCurrentColor();
+                            colorEditMode = false;
+                            sv.scrollAllowed = true;
+                            return true;
+                        }
+                        return true;
+                    }
+                    return gestureDetector.onTouchEvent(e);
                 }
             });
             buttons.add(b);
@@ -105,17 +150,15 @@ public class ScrollPalette extends Activity {
 
         linLay.draw(c);
 
-        for (Button b : buttons) {
+        for (ColorButton b : buttons) {
             Rect offsetViewBounds = new Rect();
             b.getHitRect(offsetViewBounds);
 
-            b.getBackground().setColorFilter(
-                    bm.getPixel(offsetViewBounds.centerX(), 0),
-                    PorterDuff.Mode.SRC);
+            b.setCoreColor(bm.getPixel(offsetViewBounds.centerX(), 0));
         }
     }
 
-    private void setButtonsLayout(){
+    private void setButtonsLayout() {
         Button anyButton = buttons.get(0);
 
         int sideSize = Math.max(anyButton.getWidth(), anyButton.getHeight());
