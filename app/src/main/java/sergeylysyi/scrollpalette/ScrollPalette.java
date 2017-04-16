@@ -42,8 +42,8 @@ public class ScrollPalette extends Activity {
         findViewById(R.id.confirmButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent  result = new Intent();
-                result.putExtra("color",currentColor.getColor());
+                Intent result = new Intent();
+                result.putExtra("color", currentColor.getColor());
                 setResult(RESULT_OK, result);
                 finish();
             }
@@ -97,11 +97,6 @@ public class ScrollPalette extends Activity {
                     this,
                     new GestureDetector.SimpleOnGestureListener() {
                         @Override
-                        public boolean onDown(MotionEvent e) {
-                            return true;
-                        }
-
-                        @Override
                         public boolean onSingleTapConfirmed(MotionEvent e) {
                             currentColor.change(b.getColor());
                             return true;
@@ -129,7 +124,6 @@ public class ScrollPalette extends Activity {
                             MotionEvent.PointerCoords pointerOffset = new MotionEvent.PointerCoords();
                             e.getPointerCoords(0, pointerOffset);
                             float[] hsvOffset = new float[3];
-                            //TODO: dp instead of px
                             hsvOffset[0] = pointerOffset.x / 2f;
                             hsvOffset[2] = -pointerOffset.y / 500;
                             b.offsetHSVColor(hsvOffset);

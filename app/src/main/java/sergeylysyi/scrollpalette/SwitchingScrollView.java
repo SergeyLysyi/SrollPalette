@@ -21,8 +21,6 @@ public class SwitchingScrollView extends HorizontalScrollView {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (!scrollAllowed)
-            System.out.println("cant intercept");
-        return scrollAllowed && super.onInterceptHoverEvent(event);
+        return scrollAllowed && super.onInterceptTouchEvent(event);
     }
 }
