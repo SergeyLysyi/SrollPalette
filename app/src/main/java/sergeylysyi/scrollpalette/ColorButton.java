@@ -16,6 +16,8 @@ public class ColorButton extends Button {
     private List<LinkedList<ColorBoundListener>> boundListeners = new ArrayList<>(HSV_ARRAY_SIZE);
     private float[] fixedHSV = new float[HSV_ARRAY_SIZE];
     private float[] dynamicHSV = new float[HSV_ARRAY_SIZE];
+    private float maxHue = HUE_MAX_VALUE;
+    private float minHue = 0;
 
     public ColorButton(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -28,7 +30,7 @@ public class ColorButton extends Button {
         return Color.HSVToColor(fixedHSV);
     }
 
-    public int getDynamicColor(){
+    public int getDynamicColor() {
         return Color.HSVToColor(dynamicHSV);
     }
 
@@ -49,22 +51,30 @@ public class ColorButton extends Button {
         setHSVColor(hsv);
     }
 
-    public void setColor(int color){
+    public void setColor(int color) {
         float[] hsv = new float[HSV_ARRAY_SIZE];
         Color.colorToHSV(color, hsv);
         setHSVColor(hsv);
+    }
+
+    public void setHueMinValue(float maxHue) {
+        this.minHue = Math.min(Math.max(maxHue, 0), HUE_MAX_VALUE);
+    }
+
+    public void setHueMaxValue(float minHue) {
+        this.maxHue = Math.min(Math.max(minHue, 0), HUE_MAX_VALUE);
     }
 
     public void offsetHSVColor(float[] hsvOffset) {
         //Hue max is 360 instead of 1;
         boolean[] maxReached = new boolean[HSV_ARRAY_SIZE];
 
-        dynamicHSV[0] = Math.min(Math.max(fixedHSV[0] + hsvOffset[0], 0), HUE_MAX_VALUE);
-        maxReached[0] = dynamicHSV[0] > HUE_MAX_VALUE - EPSILON || dynamicHSV[0] < 0 + EPSILON;
+        dynamicHSV[0] = Math.min(Math.max(fixedHSV[0] + hsvOffset[0], minHue), maxHue);
+        maxReached[0] = dynamicHSV[0] > maxHue - EPSILON || dynamicHSV[0] < minHue + EPSILON;
 
         for (int i = 1; i < HSV_ARRAY_SIZE; i++) {
             dynamicHSV[i] = Math.min(Math.max(fixedHSV[i] + hsvOffset[i], 0), 1);
-            maxReached[i] = dynamicHSV[i] > 1- EPSILON || dynamicHSV[i] < 0 + EPSILON;
+            maxReached[i] = dynamicHSV[i] > 1 - EPSILON || dynamicHSV[i] < 0 + EPSILON;
         }
         applyColor(dynamicHSV);
         for (int i = 0; i < maxReached.length; i++) {
@@ -89,7 +99,7 @@ public class ColorButton extends Button {
         this.invalidate();
     }
 
-    public void addBoundListener(ColorBoundListener listener, int hsvIndex){
+    public void addBoundListener(ColorBoundListener listener, int hsvIndex) {
         boundListeners.get(hsvIndex).add(listener);
     }
 

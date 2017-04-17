@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -19,12 +20,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
 public class ScrollPalette extends Activity {
 
     public static final int REQUEST_PALETTE = 0;
+    public static final float HUE_OFFSET_DIVIDER = 2f;
+    public static final float SATURATION_OFFSET_DIVIDER = 500f;
+    public static final int LENGTH_OF_VIBRATION_ON_BOUND = 50;
 
     private LinearLayout linLay;
     private SwitchingScrollView sv;
@@ -62,6 +67,7 @@ public class ScrollPalette extends Activity {
                 sv.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 setButtonsLayout();
                 setButtonsColor();
+                setButtonsBounds();
             }
         });
 
@@ -111,8 +117,8 @@ public class ScrollPalette extends Activity {
                         @Override
                         public void onLongPress(MotionEvent e) {
                             colorEditMode = true;
-                            sv.scrollAllowed = false;
-                            vibrator.vibrate(50);
+                            sv.disallowScroll();
+                            vibrator.vibrate(LENGTH_OF_VIBRATION_ON_BOUND);
                         }
                     }
             );
@@ -124,8 +130,8 @@ public class ScrollPalette extends Activity {
                             MotionEvent.PointerCoords pointerOffset = new MotionEvent.PointerCoords();
                             e.getPointerCoords(0, pointerOffset);
                             float[] hsvOffset = new float[3];
-                            hsvOffset[0] = pointerOffset.x / 2f;
-                            hsvOffset[2] = -pointerOffset.y / 500;
+                            hsvOffset[0] = pointerOffset.x / HUE_OFFSET_DIVIDER;
+                            hsvOffset[2] = -pointerOffset.y / SATURATION_OFFSET_DIVIDER;
                             b.offsetHSVColor(hsvOffset);
                             dynamicColor.change(b.getDynamicColor());
                             return true;
@@ -133,7 +139,7 @@ public class ScrollPalette extends Activity {
                             b.fixCurrentColor();
                             dynamicColor.change(0);
                             colorEditMode = false;
-                            sv.scrollAllowed = true;
+                            sv.allowScroll();
                             return true;
                         }
                         return true;
@@ -168,6 +174,20 @@ public class ScrollPalette extends Activity {
             b.getHitRect(offsetViewBounds);
 
             b.setCoreColor(bm.getPixel(offsetViewBounds.centerX(), 0));
+        }
+    }
+
+    protected void setButtonsBounds() {
+        float[] hsv = new float[3];
+        Iterator<ColorButton> iter = buttons.iterator();
+        ColorButton prevButton = iter.next();
+        while (iter.hasNext()) {
+            ColorButton currentButton = iter.next();
+            Color.colorToHSV(currentButton.getColor(), hsv);
+            prevButton.setHueMaxValue(hsv[0]);
+            Color.colorToHSV(prevButton.getColor(), hsv);
+            currentButton.setHueMinValue(hsv[0]);
+            prevButton = currentButton;
         }
     }
 

@@ -8,7 +8,7 @@ import android.widget.HorizontalScrollView;
 
 public class SwitchingScrollView extends HorizontalScrollView {
 
-    public boolean scrollAllowed = true;
+    private boolean scrollAllowed = true;
 
     public SwitchingScrollView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -22,5 +22,13 @@ public class SwitchingScrollView extends HorizontalScrollView {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
         return scrollAllowed && super.onInterceptTouchEvent(event);
+    }
+
+    public void allowScroll(){
+        scrollAllowed = true;
+    }
+
+    public void disallowScroll(){
+        scrollAllowed = false;
     }
 }
