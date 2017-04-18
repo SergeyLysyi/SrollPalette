@@ -36,6 +36,7 @@ public class ScrollPalette extends Activity {
     private CurrentColor currentColor = null;
     private CurrentColor dynamicColor = null;
     private List<ColorButton> buttons = new ArrayList<>();
+    private List<Integer> currentColors = new ArrayList<>();
     private boolean colorEditMode = false;
 
     @Override
@@ -66,7 +67,8 @@ public class ScrollPalette extends Activity {
             public void onGlobalLayout() {
                 sv.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 setButtonsLayout();
-                setButtonsColor();
+                setButtonsCoreColor();
+                setButtonsCurrentColors();
                 setButtonsBounds();
             }
         });
@@ -160,7 +162,7 @@ public class ScrollPalette extends Activity {
         }
     }
 
-    protected void setButtonsColor() {
+    protected void setButtonsCoreColor() {
         Bitmap bm = Bitmap.createBitmap(
                 linLay.getWidth(),
                 linLay.getHeight(),
@@ -191,6 +193,14 @@ public class ScrollPalette extends Activity {
         }
     }
 
+    protected void setButtonsCurrentColors(){
+        Iterator<ColorButton> buttons = this.buttons.iterator();
+        Iterator<Integer> colors = currentColors.iterator();
+        while (buttons.hasNext() && colors.hasNext()){
+            buttons.next().setColor(colors.next());
+        }
+    }
+
     private void setButtonsLayout() {
         Button anyButton = buttons.get(0);
 
@@ -209,15 +219,25 @@ public class ScrollPalette extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt("current_color", currentColor.getColor());
+        outState.putInt("chosen_color", currentColor.getColor());
+        ArrayList<Integer> colors = new ArrayList<>(buttons.size());
+        for (ColorButton b : buttons) {
+            colors.add(b.getColor());
+        }
+        outState.putIntegerArrayList("palette_current_colors", colors);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        int color = savedInstanceState.getInt("current_color");
-        currentColor.change(color);
+        int chosenColor = savedInstanceState.getInt("chosen_color");
+        currentColor.change(chosenColor);
+
+        ArrayList<Integer> currentColors = savedInstanceState.getIntegerArrayList("palette_current_colors");
+        if (currentColors != null) {
+            this.currentColors = currentColors;
+        }
     }
 
 }
